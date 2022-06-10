@@ -12,7 +12,10 @@
 struct  STRUCT_USARTx_Fram strEsp8266_Fram_Record = { 0 };
 struct  STRUCT_USARTx_Fram strUSART_Fram_Record = { 0 };
 
-
+//附近可用 wifi，最多显示10个
+uint8_t aps_list[APS_NUM][32];
+//查询到的WIFI个数CURRENT_WIFI_NUMS
+uint8_t current_wifi_nums = 0;
 
 /**
   * @brief  ESP8266初始化函数
@@ -69,8 +72,9 @@ bool ESP8266_Cmd ( char * cmd, char * reply1, char * reply2, uint32_t waittime )
 	
 	strEsp8266_Fram_Record .Data_RX_BUF [ strEsp8266_Fram_Record .InfBit .FramLength ]  = '\0';
 
-	macPC_Usart ( "%s", strEsp8266_Fram_Record .Data_RX_BUF );
-  strEsp8266_Fram_Record .InfBit .FramLength = 0;                             //清除接收标志
+	macPC_Usart ( "%s", strEsp8266_Fram_Record .Data_RX_BUF );  //打印ESP8266返回的值
+  	
+	strEsp8266_Fram_Record .InfBit .FramLength = 0;                             //清除接收标志
 	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;                             
 	if ( ( reply1 != 0 ) && ( reply2 != 0 ) )
 		return ( ( bool ) strstr ( strEsp8266_Fram_Record .Data_RX_BUF, reply1 ) || 
@@ -83,6 +87,7 @@ bool ESP8266_Cmd ( char * cmd, char * reply1, char * reply2, uint32_t waittime )
 		return ( ( bool ) strstr ( strEsp8266_Fram_Record .Data_RX_BUF, reply2 ) );
 	
 }
+
 
 bool ESP8266_AT_Test ( void )
 {
@@ -170,6 +175,73 @@ bool ESP8266_BuildAP ( char * pSSID, char * pPassWord, ENUM_AP_PsdMode_TypeDef e
 	return ESP8266_Cmd ( cCmd, "OK", 0, 1000 );
 	
 }
+
+/*******************************以下为自己补充********************************************/
+uint8_t n;
+/**
+ * @brief  在串口调试助手上打印出当前可用 Wifi
+ * @param  无
+ * @return 无
+ */
+void print_aps_list(void) {
+	uint8_t i;
+	
+	for (i = 0;i < current_wifi_nums;i++) {
+		printf("%s\n",aps_list[i]);
+	}
+}
+
+/**
+ * @brief  解析出当前可用的 Wifi 名称
+ * @param  无
+ * @return 无
+ */
+void ESP8266_ParseAps_Num(uint8_t *str) {
+	uint8_t *aps = str;
+
+	while (1) {
+		aps = strstr(aps,"+CWLAP:(");
+
+		if (aps != NULL) {
+			aps += 11;
+			sscanf(aps,"%[^\"]",aps_list[current_wifi_nums]);
+			current_wifi_nums++;
+			if (current_wifi_nums > APS_NUM) {
+				break;
+			}
+		}
+		else {
+			break;
+		}
+	}
+}
+
+/**
+ * @brief  列出当前可⽤用的 AP
+ * @param  无
+ * @return 无
+ */
+bool ESP8266_ListAPs() {
+	uint8_t *reply = "OK";
+
+	strEsp8266_Fram_Record .InfBit .FramLength = 0;               //从新开始接收新的数据包
+
+	macESP8266_Usart ( "%s\r\n", "AT+CWLAP" );
+	
+	HAL_Delay ( 500 );                 //延时
+	
+	strEsp8266_Fram_Record .Data_RX_BUF [ strEsp8266_Fram_Record .InfBit .FramLength ]  = '\0';
+
+	//macPC_Usart ( "%s", strEsp8266_Fram_Record .Data_RX_BUF );  //打印ESP8266返回的值
+	ESP8266_ParseAps_Num(strEsp8266_Fram_Record.Data_RX_BUF);
+	strEsp8266_Fram_Record .InfBit .FramLength = 0;                             //清除接收标志
+	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;                             
+	
+	return ( ( bool ) strstr ( strEsp8266_Fram_Record .Data_RX_BUF, reply ) );	
+}
+
+
+/*************************************************************************************/
 
 /*
  * 函数名：ESP8266_Enable_MultipleId
