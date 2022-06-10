@@ -18,6 +18,13 @@
 /******************************** ESP8266 使用的USARTx ***********************************/
 #define   macESP8266_USARTx                 				USART2
 
+/******************************** ESP8266 连接引脚定义 ***********************************/
+//EN
+#define      macESP8266_CH_PD_PORT                            GPIOA
+#define      macESP8266_CH_PD_PIN                             GPIO_PIN_5
+//RST
+#define      macESP8266_RST_PORT                              GPIOA
+#define      macESP8266_RST_PIN                               GPIO_PIN_4
 
 /******************************* ESP8266 数据类型定义 ***************************/
 typedef enum{
@@ -54,6 +61,12 @@ typedef enum{
 
 
 /******************************* ESP8266 外部全局变量声明 ***************************/
+
+#define APS_NUM       10                                            //最多显示当前可用 Wifi 的个数
+extern uint8_t current_wifi_nums = 0;
+extern uint8_t aps_list[APS_NUM][32];                               //当前可用的 AP 列表
+
+
 #define RX_BUF_MAX_LEN     1024                                     //最大接收缓存字节数
 
 extern struct  STRUCT_USARTx_Fram                                  //串口数据帧的处理结构体
@@ -76,11 +89,11 @@ extern struct STRUCT_USARTx_Fram strUSART_Fram_Record;
 #define     macESP8266_Usart( fmt, ... )           USART_printf (macESP8266_USARTx, fmt, ##__VA_ARGS__ ) 
 #define     macPC_Usart( fmt, ... )                printf ( fmt, ##__VA_ARGS__ )    
 
-#define     macESP8266_CH_ENABLE()                 HAL_GPIO_WritePin ( macESP8266_EN_GPIO_Port, macESP8266_EN_Pin, GPIO_PIN_SET)
-#define     macESP8266_CH_DISABLE()                HAL_GPIO_WritePin ( macESP8266_EN_GPIO_Port, macESP8266_EN_Pin, GPIO_PIN_RESET)
+#define     macESP8266_CH_ENABLE()                 HAL_GPIO_WritePin ( macESP8266_CH_PD_PORT, macESP8266_CH_PD_PIN, GPIO_PIN_SET)
+#define     macESP8266_CH_DISABLE()                HAL_GPIO_WritePin ( macESP8266_CH_PD_PORT, macESP8266_CH_PD_PIN, GPIO_PIN_RESET)
 
-#define     macESP8266_RST_HIGH_LEVEL()            HAL_GPIO_WritePin ( macESP8266_RST_GPIO_Port, macESP8266_RST_Pin, GPIO_PIN_SET)
-#define     macESP8266_RST_LOW_LEVEL()             HAL_GPIO_WritePin ( macESP8266_RST_GPIO_Port, macESP8266_RST_Pin, GPIO_PIN_RESET)
+#define     macESP8266_RST_HIGH_LEVEL()            HAL_GPIO_WritePin ( macESP8266_RST_PORT, macESP8266_RST_PIN, GPIO_PIN_SET)
+#define     macESP8266_RST_LOW_LEVEL()             HAL_GPIO_WritePin ( macESP8266_RST_PORT, macESP8266_RST_PIN, GPIO_PIN_RESET)
 
 
 /****************************************** ESP8266 函数声明 ***********************************************/
@@ -103,4 +116,9 @@ bool                     ESP8266_SendString                  ( FunctionalState e
 char *                   ESP8266_ReceiveString               ( FunctionalState enumEnUnvarnishTx );
 
 
+bool ESP8266_ListAPs();
+void print_aps_list(void);
+void ESP8266_ParseAps_Num(uint8_t *str);
+
 #endif
+
