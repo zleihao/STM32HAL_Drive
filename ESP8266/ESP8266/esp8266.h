@@ -63,7 +63,7 @@ typedef enum{
 /******************************* ESP8266 外部全局变量声明 ***************************/
 
 #define APS_NUM       10                                            //最多显示当前可用 Wifi 的个数
-extern uint8_t current_wifi_nums = 0;
+extern uint8_t current_wifi_nums;
 extern uint8_t aps_list[APS_NUM][32];                               //当前可用的 AP 列表
 
 
@@ -121,4 +121,5 @@ void print_aps_list(void);
 void ESP8266_ParseAps_Num(uint8_t *str);
 
 #endif
+
 
