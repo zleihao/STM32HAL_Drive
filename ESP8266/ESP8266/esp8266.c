@@ -2,7 +2,7 @@
  * @brief:                  基于HAL库的ESP8266驱动
  * @Revision:               V1.0
  * @author:                 点灯大师
- * @Affiliated unit：       	黄河科技学院
+ * @Affiliated unit：       黄河科技学院
  * @Email:                  im_leihao@163.com
  * @github:                 https://github.com/zleihao
  * @note                    以下驱动移植野火WIFI全程
@@ -199,6 +199,8 @@ void print_aps_list(void) {
 void ESP8266_ParseAps_Num(uint8_t *str) {
 	uint8_t *aps = str;
 
+	current_wifi_nums = 0;   //重新获取wifi
+	memset(aps_list,0,31*APS_NUM);
 	while (1) {
 		aps = strstr(aps,"+CWLAP:(");
 
@@ -221,23 +223,10 @@ void ESP8266_ParseAps_Num(uint8_t *str) {
  * @param  无
  * @return 无
  */
-bool ESP8266_ListAPs() {
-	uint8_t *reply = "OK";
-
-	strEsp8266_Fram_Record .InfBit .FramLength = 0;               //从新开始接收新的数据包
-
-	macESP8266_Usart ( "%s\r\n", "AT+CWLAP" );
-	
-	HAL_Delay ( 500 );                 //延时
-	
-	strEsp8266_Fram_Record .Data_RX_BUF [ strEsp8266_Fram_Record .InfBit .FramLength ]  = '\0';
-
-	//macPC_Usart ( "%s", strEsp8266_Fram_Record .Data_RX_BUF );  //打印ESP8266返回的值
+bool ESP8266_ListAPs() {	
+	while (!ESP8266_Cmd("AT+CWLAP","OK",NULL,500) );
 	ESP8266_ParseAps_Num(strEsp8266_Fram_Record.Data_RX_BUF);
-	strEsp8266_Fram_Record .InfBit .FramLength = 0;                             //清除接收标志
-	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;                             
-	
-	return ( ( bool ) strstr ( strEsp8266_Fram_Record .Data_RX_BUF, reply ) );	
+	return 1;
 }
 
 
@@ -606,3 +595,4 @@ char * ESP8266_ReceiveString ( FunctionalState enumEnUnvarnishTx )
 // 		ucTcpClosedFlag = strstr ( strEsp8266_Fram_Record .Data_RX_BUF, "CLOSED\r\n" ) ? 1 : 0;
 // 	} 
 // }
+
